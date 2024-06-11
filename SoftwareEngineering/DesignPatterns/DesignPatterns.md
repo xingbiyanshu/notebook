@@ -44,9 +44,12 @@
 所谓控制反转就是反转获取依赖对象的过程。传统的是自己需要用到某个对象时自己“主动”去创建，控制反转就是不需要自己主动去创建，而是“被动”接收，
 往往是通过方法参数传入。常见的具体实现有两种：DI(Dependency Inject)依赖注入（如android的Dagger框架）和“依赖查找”（Dependency Lookup）。
 
+
+
 # 设计模式
 设计模式是对SOLID原则的实践。
 设计模式大致分三类：（类对象的）创建型、（类之间的）结构型、（类之间的）行为型。
+
 
 ## 创建型
 
@@ -105,7 +108,7 @@ public class SimpleFactory { // 就一个工厂
 
 ````
 client不直接new对象而是通过工厂创建对象，自然是为了封装client不想关注的细节。
-简单工厂的client只需要知道它要创建的对象的标识符（如这里的“A”、“B”）以及他需要的是一个product（具体是什么product不关注）。
+简单工厂的client只需要知道它要创建的对象的标识符（如这里的“A”、“B”）以及他需要的是一个product（具体是什么product不关注），这样至少代码上有个显而易见的好处就是依赖的类数量减少了。
 缺点：违背开闭原则，如果需要新增其他产品类，就必须在工厂类中新增if-else逻辑判断（可以通过配置文件来改进）。
     但是整体来说，系统扩展还是相对其他工厂模式要困难。
 
@@ -154,7 +157,7 @@ class FactoryA implements AbstractFactory{
 /**客户端调用工厂**/
 public class Client {
     public static void main(String[] args) {
-        Product productA = new FactoryA().createProduct(); // 客户端仍然无需关心创建对象的具体过程，甚至具体的对象是什么。
+        Product productA = new FactoryA().createProduct(); // 和简单工厂方法一样，客户端仍然无需关心创建对象的具体过程，甚至具体的对象是什么。
                                                             但是就像前面需要知道对象标识符“A”一样，client需要知道产品A对应的工厂是FactoryA
         productA.doSomething();
         Product productB = new FactoryB().createProduct();
@@ -235,3 +238,99 @@ Java的Object中提供了clone方法，这是原型模式的一个例子。
 
 
 ## 结构型
+
+### 适配器模式
+
+#### 使用场景
+需要使用现有类，但其接口不符合系统需求，而我们无法修改它或者修改它不合适时。（往往用于事后补救，已经存在了某个功能类，想使用但接口又不符合需求）；
+需要一个统一的输出接口，而输入类型不可预知（往往在类体系结构设计时就包含了Adapter。如Android的各种集合View和Adapter。因为View加载数据的方式相对统一，但数据的来源以及获取方式却多种多样无法预估）；
+
+#### 角色组成
+目标接口（Target）：客户期望的接口。
+适配者类（Adaptee）：一个已存在的类，提供了客户需要的功能但接口不是客户期望的。
+适配器类（Adapter）：实现了Target接口，因而客户可以直接和其打交道，同时通过组合或继承的方式将客户的请求转交给Adaptee处理。
+
+#### 优缺点
+优点：
+    可以复用已有类；
+    允许类的设计更加灵活同时又不降低复用性。Adapter不一定是在需要复用已有类的时候才考虑添加的，也可能是在设计类体系结构的时候就考虑添加Adapter这一环了。
+比如，Android的ListView和Adapter是一开始就设计好的（adapter是listview的一个成员变量）。
+可能成为Adaptee的类（可能是一整套）在设计的时候可能无法照顾到所有的使用场景，
+但它仍然可以按照已有的一套标准来设计，标准以外的情况可以通过适配器来处理。如电器，国外标准的电器到中国来尽管电气参数不同仍然可以通过各种适配器使用。
+
+缺点：
+过度使用适配器可能导致系统结构混乱，难以理解和维护。
+
+#### 代码实现
+如：在生活中手机充电器, 需要将家用220V的交流电 转换为 5V的直流电后, 才能对手机充电。
+手机充电器 相当于 Adapter适配器
+220V的交流电 相当于 Adaptee 被适配者
+5V的直流电 相当于 Target目标
+手机 相当于 客户
+
+````
+public class Phone {
+    public void charging(Target voltage) { // charging接受的参数是5V的Target，所以下面的Adaptee没法直接使用
+        if (voltage.output5V() == 5) {
+            System.out.println("电压适配为5V，可以充电");
+        } else if (voltage.output5V() > 5) {
+            System.out.println("电压大于5V，不能充电～");
+        }
+    }
+}
+
+public interface Target { // Phone期望的电压
+    public int output5V();
+}
+
+public class Adaptee { // 已有了Adaptee，想利用但是不符合Phone#charging的入参要求
+    public int output220V() {
+        System.out.println("正常220V电压");
+        return 220;
+    }
+}
+
+// 于是定义适配器完成转换
+
+// // 类适配器模式
+// public class Adapter extends Adaptee implements Target { // adaptee是通过继承的方式（JAVA不支持多重继承，所以Target得是接口才可实现类适配器模式）
+//     @Override
+//     public int output5V() {
+//         // 获取到220V的电压
+//         int a = output220V();
+//         // 处理电压，转成5V
+//         int b = a / 44;
+//         return b;
+//     }
+// }
+
+// 对象适配器模式（优先使用这种方式）
+public class Adapter implements Target {
+    private Adaptee adaptee; // adaptee是通过组合的方式而非继承
+
+    public Adapter(Adaptee adaptee) {
+        this.adaptee = adaptee;
+    }
+
+    @Override
+    public int output5V() {
+        int dst = 0;
+        if (adaptee != null) {
+            int src = adaptee.output220V();
+            System.out.println("使用对象适配器进行适配");
+            dst = src / 44;  // 转换电压
+            System.out.println("适配完成，输出电压为：" + dst);
+        }
+        return dst;
+    }
+}
+
+
+public class Test {
+    public static void main(String[] args) {
+        Phone phone = new Phone();
+        phone.charging(new Adapter(new Adaptee()));
+    }
+}
+
+````
