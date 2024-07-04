@@ -198,20 +198,28 @@ f(square);
 ### 创建型
 
 很多情况下Client代码直接new对象是不妥的：
-对象的创建需要复杂的过程，不适合包含在Client中跟业务逻辑混在一起；
-对象的创建需要Client无法访问的信息；
-对象的创建不是Client关注的一部分；
-对象类别将来可能变更，或者说可以灵活配置，但不希望影响到Client；
 
-创建式设计模式抽象了实例化过程。它们有助于使系统独立于对象的创建、组合和表示方式。
+- 对象的创建需要复杂的过程，不适合包含在Client中跟业务逻辑混在一起；
+- 对象的创建需要Client无法访问的信息；
+- 对象的创建不是Client关注的一部分；
+- 对象类别将来可能变更，或者说可以灵活配置，但变更时不希望影响到Client；
 
-创建型设计模式由两个主导思想组成：一个是对用户隐藏使用了哪些具体类（用户持有的是接口引用，不清楚具体创建的是什么Class的对象）；另一个是隐藏这些类的实例是如何创建和组合的（比如直接从对象池缓存获取而非新建，比如进行了复杂的配置等）。
+创建型设计模式由两个主导思想组成：
 
-创建设计模式进一步分为对象创建模式和类创建模式。对象创建模式将对象创建委派给另一个对象，而类创建模式通过继承将创建对象的工作延迟到了子类。
+- 对用户隐藏使用了哪些具体类（用户持有的是接口引用，不清楚具体创建的是什么Class的对象）；
+- 对用户隐藏这些类的实例是如何创建和组合的（比如直接从对象池缓存获取而非新建，比如进行了复杂的配置等）；
+
+上面的隐藏不是目的，并不是为了隐藏而隐藏，而是因为隐藏这些细节可以实现良好的封装，使得用户业务逻辑和繁琐复杂的对象创建逻辑解耦。
+
+创建设计模式进一步分为对象创建模式和类创建模式。
+对象创建模式将对象创建委派给另一个对象，基于组合；而类创建模式将创建对象的工作延迟到了子类，基于继承。
 
 #### 简单工厂模式（Simple Factory Pattern）
 
-简单工厂模式又叫做静态工厂方法模式（static Factory Method pattern）,它是通过使用静态方法接收不同的参数来返回不同的实例对象。
+工厂模式是通过调用工厂方法替代直接调用构造函数来创建对象的。由于多了一层工厂方法，便可完成诸多细节的封装，如鉴权、缓存、各种配置等。
+简单工厂模式又叫做静态工厂方法模式（static Factory Method pattern），因为它是使用静态方法作为工厂方法。
+它的最常见的实现是定义一个静态工厂方法接受一个表示类别的参数，根据参数生产不同的产品对象。
+另外一种形式的实现是定义多个静态工厂方法，比如生产产品的原料各异，根据不同原料定义不同静态工厂方法，但返回同一种产品。比如Android的BitmapFactory。
 
 ##### 类图
 
@@ -269,14 +277,9 @@ public class SimpleFactory {
 
 ##### 适用场景
 
-- 产品类别较少且品种固定（也可以只一种产品像BitmapFactory那样）。这是使用简单工厂模式的前提。因为简单工厂的工厂方法是硬编码的添加产品需要修改工厂方法，并且产品太多会导致工厂过于臃肿难以维护。
-- 当产品的创建（或者说获取）较为复杂时，比如需要鉴权逻辑、需要缓存机制、数据来源各种各样（像BitmapFactory）等，可以使用工厂方法封装这些细节，以避免污染Client主体业务逻辑；
-- 当Client想要自由切换产品类型而不必修改Client代码时。可以通过配置文件达到完全不用修改Client代码的目的。
-
-##### 优缺点
-
-对比其它工厂模式实现最简单。
-简单工厂模式的主要问题是工厂类会随着产品的增加变得臃肿，并且新增产品需要修改工厂类的实现违反了“开闭原则”。所以简单工厂一般用于产品类别较少且品种固定的场景。
+- 产品类别较少且品种固定（也可以只一种产品像BitmapFactory那样）。这是使用简单工厂模式的前提。因为简单工厂的工厂方法是硬编码的，添加产品需要修改工厂方法违反了“开闭原则”，并且产品太多会导致工厂过于臃肿难以维护。
+- 当产品的创建（或者说获取）较为复杂时。比如需要鉴权逻辑、需要缓存机制、数据来源各种各样（像BitmapFactory）等，可以使用工厂方法封装这些细节，以避免污染Client主体业务逻辑；
+- 当Client想要自由切换产品类型而不必修改Client代码时。可以定义单独的静态工厂方法，通过配置文件配置想要生产的产品类型，运行时从配置文件解析产品类型，达到完全不用修改Client代码的目的。
 
 ##### 应用实例
 
@@ -285,10 +288,8 @@ public class SimpleFactory {
 
 #### 工厂方法模式（Factory method pattern）
 
-定义用于创建对象的接口，但让子类决定实例化哪个类。工厂方法允许类将其使用的实例化延迟到子类。
+工厂方法模式中的工厂和产品都有各自的接口，工厂方法不再是静态的，而是由子工厂具体实现，生产具体的产品。
 
-工厂方法模式使用一个工厂方法替代具体类的构造方法来创建对象。
-工厂方法通常定义在接口中，由具体的工厂类去实现。
 工厂方法属于类创建模式，它将对象的创建延迟到子类。
 
 ##### 类图
@@ -349,13 +350,7 @@ public class Client {
 
 ##### 适用场景
 
-- 简单工厂适用的场景
-- 需要频繁的新增产品类别。工厂方法模式在新增产品时只需新增一对产品和工厂类，无需修改已有代码，符合“开闭原则”，扩展性良好。
-
-##### 优缺点
-
-工厂方法模式的优点就是在新增产品时无需修改已有代码，只需新增一对产品和工厂类，符合“开闭原则”，扩展性良好。
-缺点就是每新增一类产品都需成对新增产品和工厂类，一定程度上增加了系统的复杂性。
+- 简单工厂模式适用的场景工厂方法模式均可胜任，除此之外若还需要扩展产品类，则应选择工厂方法模式。不同于简单工厂模式新增产品需修改已有的工厂类，工厂方法模式只需新增一对产品和工厂类，无需修改已有代码，符合“开闭原则”，扩展性良好。
 
 ##### 应用实例
 
@@ -364,7 +359,10 @@ public class Client {
 #### 抽象工厂模式
 
 工厂方法模式中的工厂只创建一种产品，而抽象工厂模式中的工厂用于生产“产品族”。
-比如，用户期望是生产一套风格一致的家具，包括桌、椅、门等，并且随时可以替换风格（目前有中式美式两种风格）。如果按工厂方法实现，首先我们需要中式桌工厂、中式椅工厂、中式门工厂、美式桌工厂、美式椅工厂、美式门工厂，其次，我们需要根据用户要求小心组装避免中美混搭（但代码机制上无法保证不犯错误）。如果使用抽象工厂模式则只需要中式家具工厂和美式家具工厂，每个工厂都生产整套风格一致的桌椅门，替换风格只需要替换一个工厂即可。
+比如，用户期望是生产一套风格一致的家具，包括桌、椅、门等，并且随时可以替换风格（目前有中式美式两种风格）。
+如果按工厂方法实现，首先我们需要中式桌工厂、中式椅工厂、中式门工厂、美式桌工厂、美式椅工厂、美式门工厂，
+其次，我们需要根据用户要求小心组装避免中美混搭（但代码机制上无法保证不犯错误）。如果使用抽象工厂模式则只需要中式家具工厂和美式家具工厂，
+每个工厂都生产整套风格一致的桌椅门，替换风格只需要替换一个工厂即可。
 
 ##### 类图
 
@@ -372,16 +370,16 @@ public class Client {
 
 ##### 代码实现
 
+参见sdk数据协作
+
 ##### 适用场景
 
-- 同工厂方法模式，不过工厂方法中的“产品”对应这里的“产品族”
-
-##### 优缺点
-
-无法以符合“开闭原则”的方式单独添加产品，只能添加产品族
+- 同工厂方法模式，但是将其中的“产品”替换为“产品族”。
+- 抽象工厂模式的扩展性针对的是“产品族”，所以无法以符合“开闭原则”的方式单独添加“产品”，所以它不适用于产品需要经常扩展的情况。
 
 ##### 应用实例
 
+Android的MediaPlayerFactory；
 比如数据协作的PaintBord/Painter/PaintFactory就是抽象工厂模式实现的。
 PaintBord和Painter都是产品，他们是配套使用的，是一个产品族。一个factory要同时生产这两类产品，也就是生产一个产品族。SDK提供了Default的实现版本，用户可以直接用，如果不符合要求也可以自己实现然后一键替换。
 
@@ -392,24 +390,18 @@ PaintBord和Painter都是产品，他们是配套使用的，是一个产品族�
 WindowManager wm = (WindowManager)getSystemService(getApplication().WINDOW_SERVICE);
 很多语言都内置了语言机制来支持这种模式，比如kotlin的object类。这样省去了用户自己实现（什么懒汉模式、线程锁之类的细节）。
 
+##### 类图
+
+![Singleton](res/Singleton.png)
+
+##### 应用实例
+
+单例模式的应用非常常见，如各种Manager往往是单例的，Android中的PMS,AMS,WMS也都是单例的。
+
 #### 生成器模式（Builder）
 
 有时候一个对象非常复杂，成员变量都有几十个。这时要构造这个对象，调用构造方法传递几十个参数显然不可取，即便可以多重载几个构造函数针对不同场景
 内部初始化一些参数，这也非常麻烦。这个时候就可以考虑使用Builder模式了。
-比如android中的
-AlertDialog.Builer builder=new AlertDialog.Builder(context);
-builder.setIcon(R.drawable.icon)
-.setTitle("title")
-.setMessage("message")
-.setPositiveButton("Button1",
-new DialogInterface.OnclickListener(){
-public void onClick(DialogInterface dialog,int whichButton){
-setTitle("click");
-}   
-})
-.create()
-.show();
-
 Builder模式可以将复杂的构造过程，拆分成一个个的set，一般支持链式调用，也可以在代码的不同阶段set不同的字段，而不必像调用构造时一股脑全部传入。
 只有等到最终调用构建方法时才会真正执行对象构造。如上面的show()，一般是build()方法。
 
@@ -417,19 +409,44 @@ Builder模式可以将复杂的构造过程，拆分成一个个的set，一般�
 
 对象本身非常复杂，成员众多
 
+##### 应用实例
+
+Android中的对话框创建、通知创建等。
+
+````java
+AlertDialog.Builer builder=new AlertDialog.Builder(context);
+builder.setIcon(R.drawable.icon)
+      .setTitle("title")
+      .setMessage("message")
+      .setPositiveButton("Button1", new DialogInterface.OnclickListener(){
+        public void onClick(DialogInterface dialog,int whichButton){
+            setTitle("click");
+          }   
+        })
+      .create()
+      .show();
+````
+
+SDK中许多复杂的类如会议参数都可以适用Builder模式。
+
 #### 原型模式
 
-原型模式，即Prototype，是指创建新对象的时候，根据现有的一个原型来创建。
-我们举个例子：如果我们已经有了一个String[]数组，想再创建一个一模一样的String[]数组，怎么写？
+通过“复制”一个已经存在的实例来返回新的实例,而不是新建实例。被复制的实例就是我们所称的“原型”，这个原型是可定制的。
+
+举个例子：如果我们已经有了一个String[]数组，想再创建一个一模一样的String[]数组，怎么写？
 实际上创建过程很简单，就是把现有数组的元素复制到新数组。如果我们把这个创建过程封装一下，就成了原型模式。用代码实现如下：
-// 原型:
+
+````java
 String[] original = { "Apple", "Pear", "Banana" };
-// 新对象:
-String[] copy = Arrays.copyOf(original, original.length);
+String[] copy = Arrays.copyOf(original, original.length); // 这里就不是一个个的new对象而是直接复制，通过直接复制代替new创建对象这就是原型模式的本质。
+````
+
 对于普通类，我们如何实现原型拷贝？Java的Object提供了一个clone()方法，
 它的意图就是复制一个新的对象出来，我们需要实现一个Cloneable接口来标识一个对象是“可复制”的。
 
-通过“复制”一个已经存在的实例来返回新的实例,而不是新建实例。被复制的实例就是我们所称的“原型”，这个原型是可定制的。
+##### 适用场景
+
+原型模式关注点是效率。
 原型模式多用于创建复杂的或者耗时的实例，因为这种情况下，复制一个已经存在的实例使程序运行更高效；或者创建值相等，只是命名不一样的同类数据。
 原型模式是在内存二进制流的拷贝， 要比直接new一个对象性能好很多， 特别是要在一个循环体内产生大量的对象时， 原型模式可以更好地体现其优点。
 原型模式还可以避免构造函数的约束 ，这既是它的优点也是缺点，直接在内存中拷贝，构造函数是不会执行的 。 优点就是减少了约束， 缺点也是减少了约束， 需要大家在实际应用时考虑。
@@ -441,16 +458,28 @@ Java的Object中提供了clone方法，这是原型模式的一个例子。
 如果对象中的数据需要经过复杂的计算才能得到（比如排序、计算哈希值），或者需要从 RPC、网络、数据库、文件系统等非常慢速的 IO 中读取，
 这种情况下，我们就可以利用原型模式，从其他已有对象中直接拷贝得到，而不用每次在创建新对象的时候，都重复执行这些耗时的操作。
 此时，建议使用原型模式，如数据库连接池、线程池等各种资源池。
-
 很多实例会持有类似文件、Socket这样的资源，这些资源是无法复制给另一个对象共享的。
+
+##### 应用实例
+
+Java的Object中提供了clone方法；
+Android中的Bitmap#copy方法；
+Android中的Intent#clone方法；
 
 ### 结构型
 
 #### 适配器模式
 
+将一个类的接口转接成用户所期待的。
+
+##### 类图
+
+![Adapter](res/Adapter.png)
+
 ##### 使用场景
 
-需要使用现有类，但其接口不符合系统需求，而我们无法修改它或者修改它不合适时。（往往用于事后补救，已经存在了某个功能类，想使用但接口又不符合需求）；
+适配器模式的关注点是复用。
+需要使用现有类，但其接口不符合系统需求，而我们无法修改它或者修改它不合适时。（用于事后补救，而非事先设计好的。已经存在了某个功能类，想使用但接口又不符合需求）；
 需要一个统一的输出接口，而输入类型不可预知（往往在类体系结构设计时就包含了Adapter。如Android的各种集合View和Adapter。因为View加载数据的方式相对统一，但数据的来源以及获取方式却多种多样无法预估）；
 
 ##### 角色组成
@@ -548,8 +577,11 @@ public class Test {
 
 #### 桥接模式
 
+用于将抽象部分与实现部分分离，使得它们可以独立地变化。
+
 ##### 使用场景
 
+桥接模式主要解决“类爆炸”的问题。手段是使用组合替代继承。
 若类的体系结构可以朝不同维度独立发展则应考虑这样做，而不是揉在一个维度发展，这样会导致类数量爆炸。
 比如有形状类Shape，其有子类Circle和Square，后来有了新的需求需要有红色/蓝色的circle和Square，
 这时我们不应该新建类RedCircle/RedSquare/BlueCircle/BlueSquare，这样就是在一个维度“形状与颜色”上扩展类，
@@ -558,12 +590,11 @@ Circle里面包含Color属性值为Red。之前的方式是通过继承的方式
 
 #### 组合模式
 
-##### 使用场景
+当对象模型具有树状结构时，可以将其中每一种对象抽象为“节点”，并通过组合的方式关联父子节点，以简化针对该树状结构的算法逻辑。
 
-当类体系结构具有树状结构时，且类本质上有相似性，用户可以将他们当做同一类对象处理时，可以考虑使用组合模式。
-常见的如文件系统，其中的文件夹、文件都可以抽象为文件，文件夹不过是特殊的文件，其内包含了其他文件；又如组织架构，部门、小组、员工都可以抽象为“节点”，
-不过员工是叶子节点，其他节点内部可以包含节点。这样的设计往往能使算法利用上递归处理，从而使逻辑变得简单。
-当你想要针对某个某个节点做某些计算的时候，你只需要调用该节点的方法，然后请求会自动顺着树形结构传递到每一个子节点，最终返回总的结果。
+##### 类图
+
+![Composite](Composite.png)
 
 ##### 角色组成
 
@@ -579,14 +610,24 @@ Circle里面包含Color属性值为Red。之前的方式是通过继承的方式
 
 - 客户端 （Client） 通过组件接口与所有项目交互。 因此， 客户端能以相同方式与树状结构中的简单或复杂项目交互。
 
+##### 使用场景
+
+组合模式主要用于对象模型具有树状结构的场景，关注的点是通过优化数据结构简化算法逻辑。
+当类体系结构具有树状结构时，且类本质上有相似性，用户可以将他们当做同一类对象处理时，可以考虑使用组合模式。
+常见的如文件系统，其中的文件夹、文件都可以抽象为文件，文件夹不过是特殊的文件，其内包含了其他文件；又如组织架构，部门、小组、员工都可以抽象为“节点”，
+不过员工是叶子节点，其他节点内部可以包含节点。这样的设计往往能使算法利用上递归处理，从而使逻辑变得简单。
+当你想要针对某个某个节点做某些计算的时候，你只需要调用该节点的方法，然后请求会自动顺着树形结构传递到每一个子节点，最终返回总的结果。
+
+##### 应用实例
+
+Android的View和ViewGroup。
+sdk的组织架构就用到了组合模式。
+
 #### 装饰模式
 
 通过使用组合而非继承的方式扩展类的功能。
-修饰模式是类别继承的另外一种选择。类继承在编译时候增加行为，而装饰模式是在运行时增加行为。
-
-修饰模式是类别继承的另外一种选择。类继承在编译时候增加行为，而装饰模式是在运行时增加行为。
-
-当有几个相互独立的功能需要扩充时，这个区别就变得很重要。在有些面向对象的编程语言中，类别不能在运行时被创建，通常在设计的时候也不能预测到有哪几种功能组合。这就意味著要为每一种组合创建一个新类别。相反，修饰模式是面向运行时候的对象实例的,这样就可以在运行时根据需要进行组合。
+装饰模式是类继承的另外一种选择。类继承在编译时候增加行为，而装饰模式是在运行时增加行为。
+当有几个相互独立的功能需要扩充时，这个区别就变得很重要。在有些面向对象的编程语言中，类别不能在运行时被创建，通常在设计的时候也不能预测到有哪几种功能组合，这就意味著要为每一种组合创建一个新类别很繁琐且难以实现。相反，装饰模式是面向运行时候的对象实例的,这样就可以在运行时根据需要进行组合。
 
 装饰类和被装饰类可以独立发展，不会相互耦合，装饰模式是继承的一个替代模式，装饰模式可以动态扩展一个实现类的功能。
 装饰模式与继承关系的目的都是要扩展对象的功能，但是装饰模式可以提供比继承更多的灵活性。装饰模式允许系统动态决定“贴上”或者除掉一个“装饰”，继承关系是静态的，它在系统运行前就决定了；
@@ -596,17 +637,21 @@ Circle里面包含Color属性值为Red。之前的方式是通过继承的方式
 装饰模式和桥接模式有共同点都是类结构在多维度演进，但桥接模式两部分之间不需要是实现同一个接口，而装饰模式需要是实现同一个接口。
 这使得它可以在运行时增加功能。
 
+##### 类图
+
+![Decorator](res/Decorator.png)
+
 ##### 使用场景
 
+装饰模式关注的是类的功能扩展。可动态扩展和撤销，不可造成类爆炸。
 需要扩展一个类的功能，或给一个类增加附加责任。
 需要动态的给一个对象增加功能，这些功能可以再动态地撤销。
 需要增加一些基本功能的排列组合而产生的非常大量的功能，从而使继承变得不现实。
 
-##### 角色组成
-
-##### 已知用例
+##### 应用实例
 
 Java IO 流为典型的装饰模式。
+Android的ContextThemeWrapper,ContextWrapper, Context。
 
 #### 外观模式
 
@@ -618,6 +663,11 @@ Java IO 流为典型的装饰模式。
 SDK往往是使用该模式的很好的例子，如confsdk。
 
 外观模式回归了最原始的封装的意图。
+
+##### 应用实例
+
+Android的ContextImpl
+confsdk
 
 ##### 角色组成
 
@@ -631,18 +681,31 @@ SDK往往是使用该模式的很好的例子，如confsdk。
 
 #### 享元模式
 
+享元模式是一种结构型设计模式， 它摒弃了在每个对象中保存所有数据的方式， 通过共享多个对象所共有的相同状态， 让你能在有限的内存容量中载入更多对象。
+
+##### 类图
+
+![Flyweight](res/Flyweight.png)
+
 ##### 使用场景
 
 当系统中存在大量同质对象，占用大量资源时，可以考虑将该对象拆解，将所有对象共有的且“只读”的属性提取出来形成新的共享对象——享元对象。
 原有对象=拆解后的对象+享元对象（通过包含享元对象的引用）。
 在这个模式中，享元对象的数量是有限的，且享元对象中包含的属性占用的资源较多，这样相当于通过共享这些大头的资源降低了系统整体的资源消耗。
 需要注意的是享元中的属性必须是“只读”的，否则它就不能共享了而只能每个对象有自己独立一份了。
+享元模式只是一种优化。 在应用该模式之前， 你要确定程序中存在与大量类似对象同时占用内存相关的内存消耗问题， 并且确保该问题无法使用其他更好的方式来解决。
+
+##### 应用实例
+
+Android的Message.obtain ?这不是对象池吗？
 
 #### 代理模式
 
-##### 使用场景
+让你能够提供对象的替代品或其占位符。 代理控制着对于原对象的访问， 并允许在将请求提交给对象前后进行一些处理。
 
-在客户调用原接口之前你期望做一些其他工作，比如添加日志、记录耗时、控制权限、远程过程调用（代理封装了进程间通信细节）等。
+##### 类图
+
+![Proxy](res/Proxy.png)
 
 ##### 角色组成
 
@@ -656,24 +719,121 @@ SDK往往是使用该模式的很好的例子，如confsdk。
 
 - 客户端 （Client） 能通过同一接口与服务或代理进行交互， 所以你可在一切需要服务对象的代码中使用代理。
 
+##### 使用场景
+
+在客户调用原接口之前你期望做一些其他工作，比如添加日志、记录耗时、控制权限、远程过程调用（代理封装了进程间通信细节）等。
+
+##### 应用实例
+
+如Android Binder的service的本地proxy
+
 ### 行为型
 
 #### 责任链模式
 
 责任链模式是一种行为设计模式， 允许你将请求沿着处理者链进行发送。 收到请求后， 每个处理者均可对请求进行处理， 或将其传递给链上的下个处理者。
 
+##### 类图
+
+![Chain of Responsibility](res/ChainofResponsibility.png)
+
 ##### 使用场景
 
 SDK处理消息时用到
 
-##### 角色组成
+##### 应用实例
 
-![ChainofResponsibility.png](res/ChainofResponsibility.png)
+在Android处理点击事件时，父View先接收到点击事件，如果父View不处理则交给子View，把责任依次往下传递；还有Java的异常捕获机制也是责任链模式的一种体现。
+SDK的消息处理也应用了该模式。
 
 #### 命令模式
 
 将“请求”转换为一个包含与请求相关的所有信息的独立对象。 该转换让你能根据不同的请求将方法参数化、 延迟请求执行或将其放入队列中， 且能实现可撤销操作。
-此处“请求”的含义即方法调用——调用方调用接收方的方法。将这个过程抽象出来独立成一个对象，这个对象我们称之为“命令”，现在调用方调用命令，命令再调用接收方，这样的模式被成为命令模式。
+传统“请求”的含义即方法调用——调用方调用接收方的方法。将这个过程抽象出来独立成一个对象，这个对象我们称之为“命令”，现在调用方调用命令，命令再调用接收方，这样的模式被称为命令模式。
+
+我们把模块A借助模块B完成某个任务的过程称为A“请求”B。
+传统的请求方式是A直接调用B的方法
+
+````java
+class A{
+  fun(){
+    B.doSomething();
+  }
+}
+````
+
+但是现在的情况是：
+
+- A不想关注或不需要关注B；
+- A也不关注具体做了什么，它只需在特定时机触发执行动作即可；
+- A虽然不关注具体做了什么，但是它可能想在某个时机撤销刚执行的操作；
+- 需要在运行时能动态改变要执行的操作，或者希望通过某种方式(比如通过配置文件)方便改变执行的操作但不影响A的代码；
+- 我们希望将doSomething对象化，这样这可以实现缓存、延迟执行、命令队列等功能。
+
+为了实现上述目标我们尝试改变传统的请求方式：
+
+````java  
+interface Command{
+  execute();
+  undo();
+}
+
+class CommandB implements Command{
+  B b; // 具体的命令关联的是具体的receiver
+  CommandB(B b){
+    this.b=b;
+  }
+  execute(){
+    b.doSomething();
+  }
+  undo(){
+    b.undoSomething();
+  }
+}
+
+
+class A{
+  Command command; // 这里保存的是Command引用，即A不关注具体的Command。A现在关联的只有一个Command接口，不再关注B以及具体做什么。
+  fun(){
+    command.execute(); // 不论是什么command，对于A来说只是简单的execute。
+  }
+
+  revoke(){
+    command.undo();
+  }
+
+  setCommand(Command cmd){ 
+    command = cmd;
+  }
+}
+
+class Client{
+  main(){
+    String cmd = parseCmdFormCfgFile(); // 可以将要执行的命令通过配置文件设置，这样变更命令可以完全不用修改代码。
+    Command command; 
+    if (cmd.equals("b")){ 
+      // 运行时根据情况决定即动态改变要执行的命令
+      command = new CommandB(new B());
+    }else if (cmd.equals("c")){
+      ...
+    }
+    A a = new A();
+    a.setCommand(command);
+    if (xxx){
+      command = new CommandC(new C()); // 运行时根据情况改变要执行的命令。比如A是快捷键，Command是绑定到该快捷键的功能，我们可以动态修改快捷键功能。
+      a.setCommand(command);
+    }
+    a.fun();
+    ...
+    if (xxx){
+      a.revoke(); // 撤销
+    }
+  }
+}
+
+````
+
+通过上面代码我们可以看到，我们将B.doSomething()拆解为了Command{B b;}.execute()，并将A直接关联Command（Command是一个接口，这点很重要），这样就达成了上述目标。
 
 ##### 类图
 
@@ -686,133 +846,133 @@ SDK处理消息时用到
 ````java
 
 // 命令
-public interface Command {
-    //执行命令
-    void execute();
-    //撤销
-    void undo();
+public interface Command {
+    //执行命令
+    void execute();
+    //撤销
+    void undo();
 }
 
 // 灯
-public class LightReceiver {
-    public void on() {
-        System.out.println("电灯打开了");
-    }
-    public void off() {
-        System.out.println("电灯关闭了");
-    }
+public class LightReceiver {
+    public void on() {
+        System.out.println("电灯打开了");
+    }
+    public void off() {
+        System.out.println("电灯关闭了");
+    }
 }
 
 // 开灯命令
-public class LightOnCommand implements Command {
-    LightReceiver lightReceiver; //聚合了命令接收者
-    public LightOnCommand(LightReceiver lightReceiver){
-        this.lightReceiver=lightReceiver;
-    }
-    public void execute() {
-        lightReceiver.on();
-    }
-    public void undo() {
-        lightReceiver.off();
-    }
+public class LightOnCommand implements Command {
+    LightReceiver lightReceiver; //聚合了命令接收者
+    public LightOnCommand(LightReceiver lightReceiver){
+        this.lightReceiver=lightReceiver;
+    }
+    public void execute() {
+        lightReceiver.on();
+    }
+    public void undo() {
+        lightReceiver.off();
+    }
 }
 
 // 关灯命令
-public class LightOffCommand implements Command {
-    LightReceiver lightReceiver;
-    public LightOffCommand(LightReceiver lightReceiver){
-        this.lightReceiver=lightReceiver;
-    }
-    public void execute() {
-        lightReceiver.off();
-    }
-    public void undo() {
-        lightReceiver.on();
-    }
+public class LightOffCommand implements Command {
+    LightReceiver lightReceiver;
+    public LightOffCommand(LightReceiver lightReceiver){
+        this.lightReceiver=lightReceiver;
+    }
+    public void execute() {
+        lightReceiver.off();
+    }
+    public void undo() {
+        lightReceiver.on();
+    }
 }
 
 // 其它电器
 ...
 
 // 空命令（用来初始化避免判null）
-public class EmptyCommand implements Command {
-    public void execute() {
-    }
-    public void undo() {
-    }
+public class EmptyCommand implements Command {
+    public void execute() {
+    }
+    public void undo() {
+    }
 }
 
 // 遥控
-public class RemoteController {
-    //各个电器的打开命令数组
-    Command[] onCommands; // 调用方不关注具体的命令，它持有的都是Command接口引用
+public class RemoteController {
+    //各个电器的打开命令数组
+    Command[] onCommands; // 调用方不关注具体的命令，它持有的都是Command接口引用
     //各个电器的关闭命令数组
-    Command[] offCommands;
-    //最近的命令。用于撤销最近一次执行的命令。也可以做成一个history列表，可以一直撤销。
-    Command lastCommand;
+    Command[] offCommands;
+    //最近的命令。用于撤销最近一次执行的命令。也可以做成一个history列表，可以一直撤销。
+    Command lastCommand;
 
-    public RemoteController() {
-        onCommands = new Command[5];
-        offCommands = new Command[5];
-        for (int i = 0; i < 5; i++) {
-            onCommands[i] = new EmptyCommand(); // 初始化为空命令，避免非null判定
-            offCommands[i] = new EmptyCommand();
-        }
-    }
+    public RemoteController() {
+        onCommands = new Command[5];
+        offCommands = new Command[5];
+        for (int i = 0; i < 5; i++) {
+            onCommands[i] = new EmptyCommand(); // 初始化为空命令，避免非null判定
+            offCommands[i] = new EmptyCommand();
+        }
+    }
 
-    //给各个遥控按钮（灯按钮、冰箱按钮...）设置你需要的命令
-    public void setCommand(int no, // no指定是哪类电器
-                             Command onCommand, Command offCommand) { // 调用方不关注具体的命令，所有的参数都是Command接口
-        onCommands[no] = onCommand;
-        offCommands[no] = offCommand;
-    }
+    //给各个遥控按钮（灯按钮、冰箱按钮...）设置你需要的命令
+    public void setCommand(int no, // no指定是哪类电器
+                             Command onCommand, Command offCommand) { // 调用方不关注具体的命令，所有的参数都是Command接口
+        onCommands[no] = onCommand;
+        offCommands[no] = offCommand;
+    }
 
-    //按下开的按钮
-    public void onButtonWasPushed(int no) {
-        //找到你按下的开的按钮，并调用对应方法
-        onCommands[no].execute();
-        //记录这次的操作，用于撤销
-        lastCommand = onCommands[no];
-    }
+    //按下开的按钮
+    public void onButtonWasPushed(int no) {
+        //找到你按下的开的按钮，并调用对应方法
+        onCommands[no].execute();
+        //记录这次的操作，用于撤销
+        lastCommand = onCommands[no];
+    }
 
-    //按下关的按钮
-    public void offButtonWasPushed(int no) {
-        //找到你按下的关的按钮，并调用对应方法
-        offCommands[no].execute();
-        //记录这次的操作，用于撤销
-        lastCommand = offCommands[no];
-    }
+    //按下关的按钮
+    public void offButtonWasPushed(int no) {
+        //找到你按下的关的按钮，并调用对应方法
+        offCommands[no].execute();
+        //记录这次的操作，用于撤销
+        lastCommand = offCommands[no];
+    }
 
-    //按下撤销的按钮
-    public void undoButtonWasPushed(int no) {
-        lastCommand.undo();
-    }
+    //按下撤销的按钮
+    public void undoButtonWasPushed(int no) {
+        lastCommand.undo();
+    }
 }
 
 // 用户代码
-public class Client {
-    public static void main(String[] args) {
+public class Client {
+    public static void main(String[] args) {
         // 尽管调用者不关注具体的命令及其接收者，但这个关联的任务总要有人负责。
         // 用户负责将具体的命令、具体的接收者以及调用者三方关联起来
-        //创建电灯的对象（接受者）
-        LightReceiver lightReceiver = new LightReceiver();
-        //创建电灯相关的开关命令
-        LightOnCommand lightOnCommand = new LightOnCommand(lightReceiver);
-        LightOffCommand lightOffCommand = new LightOffCommand(lightReceiver);
-        //需要一个遥控器
-        RemoteController remoteController = new RemoteController();
-        //给各个电器设置命令,比如no-0是电灯的序号
-        remoteController.setCommand(0,lightOnCommand,lightOffCommand);
+        //创建电灯的对象（接受者）
+        LightReceiver lightReceiver = new LightReceiver();
+        //创建电灯相关的开关命令
+        LightOnCommand lightOnCommand = new LightOnCommand(lightReceiver);
+        LightOffCommand lightOffCommand = new LightOffCommand(lightReceiver);
+        //需要一个遥控器
+        RemoteController remoteController = new RemoteController();
+        //给各个电器设置命令,比如no-0是电灯的序号
+        remoteController.setCommand(0,lightOnCommand,lightOffCommand);
         // 设置其它电器
         ...
 
-        System.out.println("按下灯的开按钮");
-        remoteController.onButtonWasPushed(0);
-        System.out.println("按下灯的关按钮");
-        remoteController.offButtonWasPushed(0);
-        System.out.println("按下灯的撤销按钮");
-        remoteController.undoButtonWasPushed(0); // 撤销关灯，灯又开了
-    }
+        System.out.println("按下灯的开按钮");
+        remoteController.onButtonWasPushed(0);
+        System.out.println("按下灯的关按钮");
+        remoteController.offButtonWasPushed(0);
+        System.out.println("按下灯的撤销按钮");
+        remoteController.undoButtonWasPushed(0); // 撤销关灯，灯又开了
+    }
 }
 
 ````
@@ -830,6 +990,8 @@ public class Client {
 
 ##### 应用实例
 
+例如Java的线程池的使用就是用到了命令模式，线程池对象可以执行execute方法,execute方法参数就是一个Runnable指令，此时就可以创建一个Runnable命令对象。
+
 #### 迭代器模式
 
 可以让用户在无需关注集合底层表现形式 （列表、 栈和树等） 的情况下以统一的方式遍历集合（常常是多种集合）中所有的元素。
@@ -838,6 +1000,9 @@ public class Client {
 那遍历的逻辑可能就很复杂了。另外除了集合底层结构的差异，遍历的算法也有差异，有时我们希望以不同的方式遍历集合，如正序、倒序、深度优先、广度优先等，这时遍历的逻辑就更复杂了。
 我们希望客户无需关注这些具体的细节，客户只关注一件事“能够以我期望的方式（如正序、倒序）遍历完集合”，并且支持将来轻松替换遍历的方式，并且各个集合的遍历方式统一，这样即使将来替换集合实现，代码改动也很小，学习成本也低。
 这就是迭代器模式的初衷。
+
+##### 应用实例
+
 java的集合类都提供有各种类型的Iterator，通过xxxIterator()成员方法获取。
 具体实现参考java集合。
 
@@ -846,7 +1011,7 @@ java的集合类都提供有各种类型的Iterator，通过xxxIterator()成员�
 中介者模式是一种行为设计模式， 能让你减少对象之间混乱无序的依赖关系。 该模式会限制对象之间的直接交互， 迫使它们通过一个中介者对象进行合作。
 想象没有集线器要连接多台电脑需要每两台电脑之间牵一条网线，而加上集线器后就成了中介者模式。又比如找房子，没有中介和有中介，有中介就是中介者模式。
 
-##### 角色组成
+##### 类图
 
 ![Mediator](res/Mediator.png)
 
@@ -859,10 +1024,15 @@ java的集合类都提供有各种类型的Iterator，通过xxxIterator()成员�
 
 ![Memento](res/Memento.png)
 
+##### 应用实例
+
+Activity的onSaveInstanceState和onRestoreInstanceState
+
 #### 观察者模式（发布-订阅模式）
 
 ##### 应用实例
 
+Android的各种listener，如onclicklistener、广播监听器、生命周期Observer
 sdk的请求的ResultListener，以及NtfListner就是这种模式。
 
 #### 状态模式
@@ -911,6 +1081,10 @@ dosomething可能是很复杂的逻辑，case也可能扩展，扩展甚至需�
 ##### 类图
 
 ![Strategy](res/Strategy.png)
+
+##### 应用实例
+
+Android在属性动画中使用时间插值器的时候就用到了策略模式。在使用动画时，你可以选择线性插值器LinearInterpolator、加速减速插值器AccelerateDecelerateInterpolator、减速插值器DecelerateInterpolator以及自定义的插值器。这些插值器都是实现根据时间流逝的百分比来计算出当前属性值改变的百分比。通过根据需要选择不同的插值器，实现不同的动画效果。
 
 #### 模板方法模式
 
@@ -1075,16 +1249,34 @@ class App{
 上面代码实例可以看出，我们在Exporter接口中针对各个Shape类定义了不同的重载版本。那如果Shape类不断新增呢？
 会导致Exporter接口以及其实现类跟着修改。所以访问者模式比较适合类结构体系稳定，但是需要经常针对类体系新增功能。不太适合类体系经常变化的场景。
 在访问者模式中，稳定的部分是类体系结构，易变的部分是针对类体系的操作。
+假如一个对象中存在着一些与本对象不相干（或者关系较弱）的操作，为了避免这些操作污染这个对象，则可以使用访问者模式来把这些操作封装到访问者中去。
+假如一组对象中，存在着相似的操作，为了避免出现大量重复的代码，也可以将这些重复的操作封装到访问者中去。
 
 ### 总结
 
-当我们遇到一个问题时，该如何选用设计模式呢。
-有可能我们已经明确知道我们系统的关键痛点。比如效率，比如类别会不断扩展，比如针对类的操作会不断变化扩展，比如功能行为需要动态替换等等。
+软件设计模式是解决编码中各种问题的经验总结，上文介绍的是经典的设计模式，但设计模式并不止这些，新的设计模式也可能被不断发明。这么多设计模式该如何选用呢？
+我们需要厘清我们的问题痛点和要达成的目标。比如
+软件开发追求的主要目标是可靠性、可维护性、可扩展性，面对的主要课题有：
 
-上面提到的“适用场景”，我们有时可能很难套用。但是所有的设计模式都有共通的底层逻辑——“高内聚低耦合”。具体：
+- 抽象分层
+- 应对变化
 
-- 封装低层次的抽象，使得系统各组成部分处于同一抽象层级，避免不同层次的抽象互相“污染”。比如，当一个对象的创建太复杂时，这些复杂的创建对象的逻辑相对我们的业务逻辑就是细节了是低层次的抽象了，如果我们让这些逻辑散落在业务逻辑中，就是抽象层级互相污染了。
+- 不同抽象层级的代码混在一起，使得代码臃肿混乱，希望代码抽象层级分明，代码清晰明了。创建型模式主要目的就是用来封装对象创建细节的，使得对象创建的复杂逻辑不会污染主体业务逻辑。策略模式
+- 功能可能不断扩展，或者变化可能不断发生，但希望对已有代码造成的破坏降到最小。
+- 已有模块有我们需要的功能但难以复用，希望能复用它但不希望对已有系统做太多改动。
+- 对象太多占用过多内存。 可以使用享元模式。
+- 比如功能扩展会破坏我们已有代码，
+- 比如针对类的操作会不断变化扩展，
+- 比如功能行为需要动态替换等等，
+- 比如类爆炸。
+- 想要针对类扩展功能，但又不能修改类。
 
-- 封装变化，使得系统的组成在一定层级上表现为“稳定的部分+稳定的部分”，而变化的部分被集中管理在一个极小的范围内。
-- 
+所有的设计模式都有共通的底层逻辑——“高内聚低耦合”：
+
+- 封装细节，使得系统各组成部分处于同一抽象层级，避免不同层次的抽象互相“污染”。
+  比如，创建型模式就主要是出于这个目的。当一个对象的创建太复杂时，这些复杂的创建对象的逻辑相对我们的业务逻辑就是细节了是低层次的抽象了，如果我们让这些逻辑散落在业务逻辑中，就是抽象层级互相污染了；
+  策略模式也是，算法
+
+- 封装变化，使得系统的组成在一定层级上表现为“稳定的部分+稳定的部分”，而变化的部分被集中管理在一个极小的范围内，使得变化发生时系统的变更符合“开闭原则”。
+
 设计模式的底层逻辑就是将系统易变的因素找出来，通过各种技术手段封装集中管理在一个极小的范围内，使得对外表现为稳定的部分，最终使得整个系统的组成在一定层级上表现为“稳定的部分+稳定的部分”。这样就增加了系统的稳定性和弹性。
