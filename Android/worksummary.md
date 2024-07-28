@@ -6851,6 +6851,16 @@ PackageManagerService启动过程中会扫描并解析当前系统中存在的�
 - PorterDuffXfermode 实现刮刮乐、遮罩、形状定制图片等效果
 - 属性动画、视图动画（补间动画、帧动画）
 
+
+
+
+# singletop,singletask,singleinstance应用场景
+
+# handler message详解
+
+
+
+
 ## Paragraphs
  I really like using Markdown.
 
