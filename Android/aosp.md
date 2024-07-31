@@ -2586,7 +2586,7 @@ public void updateOomLevelsForDisplay(int displayId) {
         startAppShortcutOrInfoActivity{
         startActivitySafely{
         super.startActivitySafely(v, intent, item){
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // 新的Activity默认在新Task启动
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // 目标Activity应该在其所属APP进程的新Task启动
 
 3. 触发startActivity
 
@@ -6819,46 +6819,6 @@ PackageManagerService启动过程中会扫描并解析当前系统中存在的�
     
 
 ````
-
-
-# APM (Application Performance Monitoring)
-
-## 启动优化
-
-## 内存优化
-
-- AS自带的Memory Profiler
-- adb shell dump
-
-## 耗电优化
-
-
-# 自定义View
-
-## 使用场景
-
-- 特殊的显示形式。如圆靶、饼状图、跳动的心。一般View需要重写onMeasure,onDraw，ViewGroup需要重写onMeasure,onLayout。
-- 特殊的交互方式。如图片浏览器KImageView。一般重写onTouchEvent。
-- 为了方便复用封装一组已有控件以单一控件的形式提供使用。如标题栏、工具栏。
-- 优化布局。如自定义FlexboxLayout就是出于这个目的。
-
-## 涉及主题
-
-- onMeasure手动计算View大小。计算需结合父view的限制以及自身的需求，最终将计算结果通过setMeasuredDimension报告父View。一般这会是最终的size,但父View可能还会施加限制（如FlexboxLayout的换行策略），并最终通过layout告知子View其实际尺寸。
-- onDraw手动绘制View内容。
-- onLayout,ViewGroup在这里调用子View的layout告知子View其实际大小。View不需要重写该方法。
-- onTouchEvent(返回true消费)/onInterceptTouchEvent(仅ViewGroup，返回true表示截获，false则继续投递给子View)自定义交互。
-- PorterDuffXfermode 实现刮刮乐、遮罩、形状定制图片等效果
-- 属性动画、视图动画（补间动画、帧动画）
-
-
-
-
-# singletop,singletask,singleinstance应用场景
-
-# handler message详解
-
-
 
 
 ## Paragraphs
