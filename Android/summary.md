@@ -35,16 +35,46 @@ Activity中不要Inflating复杂的layout，尽量扁平化。不需要理解展
 
 - logcat中过滤"Displayed"
 - adb shell am start -S -W 包名/目标activity
+  C:\Users\sissi>adb shell am start -W com.example.launchmodedemo/.WelcomeActivity
+  Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.example.launchmodedemo/.WelcomeActivity }
+  Status: ok
+  LaunchState: COLD  // 冷启动（App进程不存在，从头启动）
+  Activity: com.example.launchmodedemo/.WelcomeActivity
+  TotalTime: 650 // 从进程启动到activity显示出来
+  WaitTime: 655 // 从上一个前台activity paused到当前activity显示出来
+  Complete
+
+C:\Users\sissi>adb shell am start -W com.example.launchmodedemo/.WelcomeActivity
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.example.launchmodedemo/.WelcomeActivity }
+Status: ok
+LaunchState: WARM // 温启动（返回键退回到桌面，Activity销毁了但App进程仍存在）
+Activity: com.example.launchmodedemo/.WelcomeActivity
+TotalTime: 212 // 不需要启动App进程，只需要启动activity
+WaitTime: 219
+Complete
+
+C:\Users\sissi>adb shell am start -W com.example.launchmodedemo/.WelcomeActivity
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.example.launchmodedemo/.WelcomeActivity }
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+Status: ok
+LaunchState: UNKNOWN (0)
+Activity: com.example.launchmodedemo/.WelcomeActivity
+TotalTime: 0 // app进程和activity都存在，不需要重新创建
+WaitTime: 17
+Complete
+
 
 ## 内存优化
 
-- AS自带的Memory Profiler。最直观边操作边观察内存使用情况变化。
+- AS自带的Memory Profiler。最直观边操作边观察内存使用情况变化。（需要debug版本，意味着线上版本不能用）
 - adb shell dumpsys系列命令。 能看到概览。
   adb shell dumpsys activity activities $package 可以查看app的task/activity详情
   注意：如果activity泄漏了（走到了onDestroy但实际未能回收成功），dumpsys activity看不出异常。
        即dump结果中没有该泄漏了的activity，此时用命令"dumpsys meminfo"可以看到app中实际存在的activity数量。
        对比"dumpsys activity"中的结果或UI观察的结果可知道泄漏了多少activity。
-- adb shell am dumpheap <PID> savePath （手机上的path而非电脑，如 /data/local/tmp/dump.hprof） 导出hprof文件。然后导入AS的memory profiler分析
+- adb shell am dumpheap <PID> savePath （手机上的path而非电脑，如 /data/local/tmp/dump.hprof） 导出hprof文件。
+  然后导入AS的memory profiler分析。（需要debug版本，意味着线上版本不能用）
+- 可以在app中添加调试按钮导出hprof文件。（需要debug版本，意味着线上版本不能用）
 - 在日志中周期性打印内存使用情况。（Debug版本中使用）
 - LeakCanary（Debug版本中使用）。默认仅针对Android的几个组件Activity,Fragment,Service等，要针对其他对象需要写代码Watch。
 
@@ -63,7 +93,8 @@ Activity中不要Inflating复杂的layout，尽量扁平化。不需要理解展
 ③接收器、监听器使用时候注册和取消成对出现
 ④context使用注意生命周期，如果是静态类引用直接用ApplicationContext
 ⑤使用静态内部类
-⑥结合业务场景，设置软引用，弱引用，确保对象可以在合适的时机回收
+⑥结合业务场景，设置软引用，弱引用(可以使用ReferenceQueue监控弱引用被释放情况，被释放的会被添加到ReferenceQueue)，
+确保对象可以在合适的时机回收
 （2）建设内存监控体系
 线下监控：
 ①使用ArtHook检测图片尺寸是否超出imageview自身宽高的2倍
@@ -71,11 +102,12 @@ Activity中不要Inflating复杂的layout，尽量扁平化。不需要理解展
 线上监控：
 ①上报app使用期间待机内存、重点模块内存、OOM率
 ②上报整体及重点模块的GC次数，GC时间
-③使用LeakCannery自动化内存泄漏分析
+// ③使用LeakCannery自动化内存泄漏分析（默认只debug版本）
 总结：
 上线前重点在于线下监控，把问题在上线前解决；上线后运营阶段重点做线上监控，结合一定的预警策略及时处理
 4、真的出现低内存，设置一个兜底策略
-低内存状态回调，根据不同的内存等级做一些事情，比如在最严重的等级清空所有的bitmap，关掉所有界面，直接强制把app跳转到主界面，相当于app重新启动了一次一样，这样就避免了系统Kill应用进程，与其让系统kill进程还不如浪费一些用户体验，自己主动回收内存
+低内存状态回调，根据不同的内存等级做一些事情，比如在最严重的等级清空所有的bitmap，关掉所有界面，直接强制把app跳转到主界面，
+相当于app重新启动了一次一样，这样就避免了系统Kill应用进程，与其让系统kill进程还不如浪费一些用户体验，自己主动回收内存。
 
 ## 耗电优化
 
