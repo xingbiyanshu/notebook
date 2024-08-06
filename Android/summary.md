@@ -77,6 +77,23 @@ Complete
 - 可以在app中添加调试按钮导出hprof文件。（需要debug版本，意味着线上版本不能用）
 - 在日志中周期性打印内存使用情况。（Debug版本中使用）
 - LeakCanary（Debug版本中使用）。默认仅针对Android的几个组件Activity,Fragment,Service等，要针对其他对象需要写代码Watch。
+- adb shell "ps -T -p <PID>" 查看进程下的所有线程，观察是否数量是否异常，是否不断增加
+  adb shell "ps |grep <appId>"， 拿到进程ID，再通过adb shell "ps -T -p <PID>"查看其下所有线程。
+  另外 adb shell "cat /proc/<PID>/status" 可以查看进程详情。
+  在AS自带的CPU Profiler中也可以查看所有线程。
+  adb shell "top -H -p <PID>"可以查看线程动态信息。
+
+- adb shell ls -l /proc/<PID>/fd/ 查看进程打开的所有文件，观察是否数量是否异常，是否不断增加。
+  上面的命令可能因为权限无法执行，可以在代码中编码获取，周期性打印到logcat日志。
+  另外logcat中有如下打印均有fd泄漏的嫌疑：
+  “Too many open files”\
+  “Could not allocate JNI Env”\
+  “Could not allocate dup blob fd”\
+  “Could not read input channel file descriptors from parcel”\
+  "pthread_create * "\
+  “InputChannel is not initialized”\
+  “Could not open input channel pair”\
+  “FORTIFY: FD_SET: file descriptor >= FD_SETSIZE”
 
 1、内存泄漏的根本原因在于生命周期长的对象持有了生命周期短的对象的引用
 2、常见场景
@@ -84,8 +101,11 @@ Complete
 （2）全局集合类强引用没清理造成的内存泄漏（特别是 static 修饰的集合）
 （3）接收器、监听器注册没取消造成的内存泄漏，如广播，eventsbus
 （4）Activity 的 Context 造成的泄漏，可以使用 ApplicationContext
-（5）单例中的static成员间接或直接持有了activity的引用
-（6）非静态内部类持有父类的引用，如非静态handler持有activity的引用
+（5）单例中的static成员间接或直接持有了activity的引用。
+（6）非静态内部类持有父类的引用，如非静态handler持有activity的引用，可以使用弱引用方式处理，并在destroy时删除handler消息。
+（7）动画未cancel，AnimationHandler持有动画引用，动画如果add了listener则activity也会泄漏，需要在activity销毁时cancel动画。
+（8）service中的自定义binder要在对端binder gc时才会被回收，所以binder如果引用了service则可能导致service泄漏，可以使用弱引用。
+
 3、如何避免内存泄漏
 （1）编码规范上：
 ①资源对象用完一定要关闭，最好加finally
