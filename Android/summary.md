@@ -95,16 +95,17 @@ Complete
   “Could not open input channel pair”\
   “FORTIFY: FD_SET: file descriptor >= FD_SETSIZE”
 
-1、内存泄漏的根本原因在于生命周期长的对象持有了生命周期短的对象的引用
+1、内存泄漏的根本原因在于：生命周期长的对象持有了生命周期短的对象的引用；创建的资源忘记释放；
 2、常见场景
-（1）资源对象没关闭造成的内存泄漏（如： Cursor、File等）
+（1）资源对象没关闭造成的内存泄漏（如： Cursor、File、Stream、Animation等）
 （2）全局集合类强引用没清理造成的内存泄漏（特别是 static 修饰的集合）
-（3）接收器、监听器注册没取消造成的内存泄漏，如广播，eventsbus
+（3）接收器、监听器注册没取消造成的内存泄漏，如广播、各种listener的注册。
 （4）Activity 的 Context 造成的泄漏，可以使用 ApplicationContext
 （5）单例中的static成员间接或直接持有了activity的引用。
 （6）非静态内部类持有父类的引用，如非静态handler持有activity的引用，可以使用弱引用方式处理，并在destroy时删除handler消息。
 （7）动画未cancel，AnimationHandler持有动画引用，动画如果add了listener则activity也会泄漏，需要在activity销毁时cancel动画。
 （8）service中的自定义binder要在对端binder gc时才会被回收，所以binder如果引用了service则可能导致service泄漏，可以使用弱引用。
+（10）toast的context为activity，在activity销毁时未cancel toast。
 
 3、如何避免内存泄漏
 （1）编码规范上：
@@ -119,6 +120,7 @@ Complete
 线下监控：
 ①使用ArtHook检测图片尺寸是否超出imageview自身宽高的2倍
 ②编码阶段Memery Profile看app的内存使用情况，是否存在内存抖动，内存泄漏，结合Mat分析内存泄漏
+③使用LeakCannery自动化内存泄漏分析（默认只debug版本）
 线上监控：
 ①上报app使用期间待机内存、重点模块内存、OOM率
 ②上报整体及重点模块的GC次数，GC时间
