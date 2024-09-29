@@ -56,3 +56,16 @@ Thread.setDefaultUncaughtExceptionHandler
 整包推送
 热修复框架
 
+----------
+
+书签整理，先想好怎么分类
+分类原则，如果严格按功能分
+
+文件夹 结合 tag 这样就解决了一个网页需要多个书签文件夹的问题，多个书签文件夹->一个文件夹+多个tag
+结合new tab快捷键，结合tag和key功能在地址栏直接打开
+Ctrl+T打开新tab，ctrl+w关闭当前tab。
+Ctrl+T打开新tab后光标默认在地址栏，此时如果想快速打开书签中的某个项可以输入“*tag”然后上下键选择，或者对于常用的可以直接设置key，然后地址栏直接输入key
+
+文件夹以使用习惯分类，不用分太细，细化使用tag，如tools可以包含ip转换这种小工具、也可以包含man手册这种大工具，
+以主题分类如Android的develop查询不分在tools，而分在android下tag为tool，opensource文件夹去掉，放android下，tag添加opensourceproject或github
+书签精简，若B可以由A链接，则保留A即可。
